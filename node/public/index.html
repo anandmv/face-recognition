@@ -1,0 +1,174 @@
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>face tracker</title>
+		<meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+		<meta charset="utf-8">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				margin-left: 10%;
+				margin-right: 10%;
+				margin-top: 5%;
+				width: 40%;
+				overflow: hidden;
+				font-family: "Helvetica", Arial, Serif;
+				position: relative;
+			}
+		</style>
+	</head>
+	<body>
+		<script src="javascripts/headtrackr.js"></script>
+		<script src="javascripts/jquery.js"></script>
+		<div id="namespace" width="320" height="240" style="left: 335px;position: absolute;"></div>
+		<canvas id="compare" width="320" height="240" style="display:none"></canvas>
+		<video id="vid" autoplay loop width="320" height="240"></video>
+		<canvas id="overlay" width="320" height="240"></canvas>
+		<canvas id="debug" width="320" height="240"></canvas>
+		
+		<p id='gUMMessage'></p>
+		<p>Status : <span id='headtrackerMessage'></span></p>
+		<p><input type="button" onclick="htracker.stop();htracker.start();" value="reinitiate facedetection"></input>
+		<br/><br/>
+		<input type="checkbox" onclick="showProbabilityCanvas()" value="asdfasd"></input>Show probability-map</p>
+		<p><input type="button" onclick="searchImage();" value="Search my face"></input>
+
+			<input type="text" value="" placeholder="Name" id="name" name="name"></input>
+			<input type="button" onclick="saveImage();" value="Save my face"></input></p>
+		<script>
+		  // set up video and canvas elements needed
+		
+			var videoInput = document.getElementById('vid');
+			var canvasInput = document.getElementById('compare');
+			var canvasOverlay = document.getElementById('overlay');
+			var debugOverlay = document.getElementById('debug');
+			var overlayContext = canvasOverlay.getContext('2d');
+			canvasOverlay.style.position = "absolute";
+			canvasOverlay.style.top = '0px';
+			canvasOverlay.style.zIndex = '100001';
+			canvasOverlay.style.display = 'block';
+			debugOverlay.style.position = "absolute";
+			debugOverlay.style.top = '0px';
+			debugOverlay.style.zIndex = '100002';
+			debugOverlay.style.display = 'none';
+			
+			// add some custom messaging
+			
+			statusMessages = {
+				"whitebalance" : "checking for stability of camera whitebalance",
+				"detecting" : "Detecting face",
+				"hints" : "Hmm. Detecting the face is taking a long time",
+				"redetecting" : "Lost track of face, redetecting",
+				"lost" : "Lost track of face",
+				"found" : "Tracking face"
+			};
+			
+			supportMessages = {
+				"no getUserMedia" : "Unfortunately, <a href='http://dev.w3.org/2011/webrtc/editor/getusermedia.html'>getUserMedia</a> is not supported in your browser. Try <a href='http://www.opera.com/browser/'>downloading Opera 12</a> or <a href='http://caniuse.com/stream'>another browser that supports getUserMedia</a>. Now using fallback video for facedetection.",
+				"no camera" : "No camera found. Using fallback video for facedetection."
+			};
+			
+			document.addEventListener("headtrackrStatus", function(event) {
+				if (event.status in supportMessages) {
+					var messagep = document.getElementById('gUMMessage');
+					messagep.innerHTML = supportMessages[event.status];
+				} else if (event.status in statusMessages) {
+					var messagep = document.getElementById('headtrackerMessage');
+					messagep.innerHTML = statusMessages[event.status];
+				}
+			}, true);
+			var x_crop,y_crop,fromw_crop,tow_crop,toh_crop,fromh_crop;	
+			//search image
+			var searchImage	= function()
+			{
+				var img    = canvasInput.toDataURL("image/png");
+				var data ={"img":img};
+				$.post("/searchImage",data,function(data){
+					var jsonObj = JSON.parse(data);
+					var perMatch = parseInt(jsonObj.dist * 100);
+					if(perMatch>0)
+					{
+						var matchData = {"name":"","filename":jsonObj.matches,"percentage":perMatch};
+						$.get("/findFace",matchData,function(name){
+							matchData.name=name;
+							$.get("http://localhost:8888/sayHi",matchData)
+						})
+					}
+					else
+						$.get("http://localhost:8888/say",{"talk":"Sorry no match, please save it"})
+				})
+				$("#namespace").html('<img src="'+img+'" id="captured" />');
+				$("#namespace").append('<canvas style="position: absolute;z-index: 10001;left: 100px;" id="capturename"></canvas>');
+				var nameInput = document.getElementById('capturename');
+				nameInput=nameInput.getContext("2d");
+				nameInput.fillStyle = 'white';
+				nameInput.font="40px Georgia";
+				nameInput.fillText('Searching.........',10,20);
+			}	
+			//save image
+			var saveImage=function(){
+				var img    = canvasInput.toDataURL("image/png");
+				var data ={"name":$("#name").val(),"img":img};
+				$.post("/saveImage",data)
+				// var img2    = debugOverlay.toDataURL("image/png");
+				// var data ={"name":$("#name").val(),"img":img2};
+				// $.post("/saveImage",data)
+				$("#namespace").html('<img src="'+img+'" id="captured" />');
+				$("#namespace").append('<canvas style="position: absolute;z-index: 10001;left: 100px;" id="capturename"></canvas>');
+				//for croping face only
+				// var imageObj = new Image();
+				// imageObj.src=img;
+				// $("#namespace").append('<canvas style="display:none" id="captureImage"></canvas>');
+				// var contextI = document.getElementById('captureImage');
+				// var context = contextI.getContext('2d');
+				// console.log(x_crop,y_crop,fromw_crop, tow_crop, fromh_crop, toh_crop)
+				// context.drawImage(imageObj, x_crop, y_crop, 360, 240, fromw_crop, tow_crop, fromh_crop, toh_crop);
+				// contextI = document.getElementById('captureImage');
+				// console.log(contextI.toDataURL("image/png"))
+				var nameInput = document.getElementById('capturename');
+				nameInput=nameInput.getContext("2d");
+				nameInput.font="20px Georgia";
+				nameInput.fillText($("#name").val(),10,20);
+			}
+
+			// the face tracking setup
+			var htracker = new headtrackr.Tracker({altVideo : {ogv : "./media/capture5.ogv", mp4 : "./media/capture5.mp4"}, calcAngles : true, ui : false, headPosition : false, debug : debugOverlay});
+			htracker.init(videoInput, canvasInput);
+			htracker.start();
+			
+			// for each facetracking event received draw rectangle around tracked face on canvas
+			var flagCheck=0;
+			document.addEventListener("facetrackingEvent", function( event ) {
+				// clear canvas
+				overlayContext.clearRect(0,0,320,240);
+				// once we have stable tracking, draw rectangle
+				if (event.detection == "CS") {
+					flagCheck++;
+					if(flagCheck==1)
+					{	//$.get('http://localhost:8888/hai')
+						searchImage();
+					}
+					overlayContext.translate(event.x, event.y)
+					overlayContext.rotate(event.angle-(Math.PI/2));
+					overlayContext.strokeStyle = "white";
+					overlayContext.strokeRect((-(event.width/2)) >> 0, (-(event.height/2)) >> 0, event.width, event.height);
+					overlayContext.rotate((Math.PI/2)-event.angle);
+					overlayContext.translate(-event.x, -event.y);
+					x_crop=event.x;y_crop=event.y;fromw_crop=-(event.width/2);tow_crop=event.width;toh_crop=event.height;fromh_crop=-(event.height/2);
+				}
+			});
+			
+			// turn off or on the canvas showing probability
+			function showProbabilityCanvas() {
+				var debugCanvas = document.getElementById('debug');
+				if (debugCanvas.style.display == 'none') {
+					debugCanvas.style.display = 'block';
+				} else {
+					debugCanvas.style.display = 'none';
+				}
+			}
+
+		</script>
+	</body>
+</html>
