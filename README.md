@@ -11,7 +11,7 @@ The system will recognise you face once 4 of your emotions is saved[happy,sad,wo
 * Node.js
 * Python
 * Tornado
-  I have currently developed it to talk in Mac with built os, you could install espeak/festival/dragonfly/speak and try for other operating system
+  I have currently developed code to convert text to speech using  Mac OSX builtin library, you could install espeak/festival/dragonfly/speak and try for other operating system
 Do 'npm install' from node folder to install all the required directory
 
 ### To run it
