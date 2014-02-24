@@ -4,7 +4,7 @@ Face-recognition
 It will automatically recognise your face, captured from a webcam
 
 
-The system will recognise you face once 4 of your emotions is saved[happy,sad,worried,calm] with your name, then next time when you run the app it willdetect you face and say "Hi Master , good afternoon ". How does that sound :)
+The system will recognise you face once 4 of your emotions is saved[happy,sad,worried,calm] with your name, then next time when you run the app it willdetect you face and say `Hi Master , good afternoon `. How does that sound :)
 
 ### Requirment
 
