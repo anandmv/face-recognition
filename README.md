@@ -8,19 +8,19 @@ The system will recognise you face once 4 of your emotions is saved[happy,sad,wo
 
 Requirment
 ================
-Node.js
-Python
-Tornado
+*Node.js
+*Python
+*Tornado
   I have currently developed it to talk in Mac with built os, you could install espeak/festival/dragonfly/speak and try for other operating system
 Do 'npm install' from node folder to install all the required directory
 
 To run it
 ================
 From root directory
-  Node.js
-    node node/app.js
-  Tornado
-    python python/index.py 
+  *Node.js
+	`node node/app.js`
+  *Tornado
+	`python python/index.py`
 
 
 How It Works !
@@ -29,6 +29,6 @@ The front end part detects you head and once its done, it sends you image captur
 
 
 For testing face recognition you may try , from root directory
-  python pyfaces .\checkImage\test.png .\imagesDB\ 6 3
+  `python pyfaces .\checkImage\test.png .\imagesDB\ 6 3`
   [the last two params are eignen values used]
 
