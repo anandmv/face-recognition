@@ -25,10 +25,10 @@ From root directory
 
 ### How It Works !
 
-The front end part detects you head and once its done, it sends you image captured in html5 canvas to the backend python pyfaces, it then checks out using eigen faces and finds out a image corresponding to it[if available] and then searches csv files which saves name against image file name.
+The front end part detects you head and once its done, it sends you image captured in html5 canvas to the backend python pyfaces, it then checks out using eigen faces and finds out a image corresponding to it[if available] and then searches csv file[faces.csv] which saves name against image file name.
 
 
-For testing face recognition you may try , from root directory
+For testing face recognition you may try , from python folder
   `python pyfaces .\checkImage\test.png .\imagesDB\ 6 3`
   [the last two params are eignen values used]
 
